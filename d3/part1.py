@@ -24,7 +24,10 @@ class Forest:
         return self._forest[row][i]
 
     def __str__(self):
-        return f"width: {self._width} num rows: {self.num_rows}\n" + str(self._forest)
+        res = f"width: {self._width} num rows: {self.num_rows}\n"
+        for row in self._forest:
+            res += str("".join(["#" if s else "." for s in row])) + "\n"
+        return res
 
 
 def read_input(filename: str) -> Forest:
@@ -47,7 +50,7 @@ def solve(forest: Forest, filename: str, slope: Tuple[int] = (3, 1)) -> int:
 
 def main(filename: str):
     forest = read_input(filename)
-
+    # print(forest)
     slopes = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
     res = 1
     for slope in slopes:
