@@ -1,4 +1,5 @@
 import sys
+import copy
 from typing import Iterable, List, Callable
 from dataclasses import dataclass
 
@@ -36,31 +37,67 @@ def no_op(registers: Registers, instruction: Instruction) -> int:
     instruction.has_run = True
     return 1
 
-# TODO: look into typing-extensions/Protocol/__call__ PEP 544?
+
+def term_op(registers: Registers, instruction: Instruction) -> int:
+    instruction.has_run = True
+    return 0
+
+# TODO: look into typing-extensions/Protocol/__call__ PEP 544 vs. Callable?
 
 
 def run_until(instructions: List[Instruction], registers: Registers, condition: Callable[[Instruction], bool]) -> Instruction:
     i_ptr = 0
-    # prev_instr = None
     while True:
         inst = instructions[i_ptr]
         if condition(inst):
-            # print(f'stopping at: {inst} prev: {prev_instr}')
             break
         i_ptr += op_code_handlers[inst.op_code](registers, inst)
-        # print(f'Ran: {inst}, Advance to: {i_ptr}, Registers: {registers}')
-        prev_instr = inst
 
 
-op_code_handlers = {'nop': no_op,    'acc': acc_op,    'jmp': jmp_op, }
+op_code_handlers = {'nop': no_op,    'acc': acc_op,
+                    'jmp': jmp_op, 'term': term_op}
 
 
-def main(filename: str):
+def has_run_condition(instruction: Instruction) -> bool:
+    return instruction.has_run
+
+
+def part1(filename: str):
     instructions = list(parse_instructions(filename))
     registers = Registers()
-    run_until(instructions, registers, lambda instr: instr.has_run == True)
+
+    # Part 1
+    run_until(instructions, registers, has_run_condition)
+    assert registers.acc1 == 1723
     print(f'Registers: {registers}')
 
 
+def part2(filename: str):
+    instructions = list(parse_instructions(filename))
+    # Part 2
+    # brute force walk it from the begining each time.
+    for i_ptr, instruction in enumerate(instructions):
+        if instruction.op_code == 'nop' or instruction.op_code == 'jmp':
+            registers = Registers()
+            candidate_instructions = copy.deepcopy(instructions)
+            term_instruction = Instruction('term', 0)  # sentinel at end
+            candidate_instructions.append(term_instruction)
+
+            if instruction.op_code == 'nop':
+                candidate_instructions[i_ptr].op_code = 'jmp'
+            else:
+                candidate_instructions[i_ptr].op_code = 'nop'
+
+            run_until(candidate_instructions,
+                      registers, has_run_condition)
+            if term_instruction.has_run:
+                break
+    print(
+        f'done: altered op[{i_ptr}]: {candidate_instructions[i_ptr]}: registers: {registers}')
+    assert registers.acc1 == 846
+    assert i_ptr == 196
+
+
 if __name__ == "__main__":
-    main(sys.argv[1])
+    part1(sys.argv[1])
+    part2(sys.argv[1])
