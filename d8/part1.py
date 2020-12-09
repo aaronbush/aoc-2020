@@ -1,5 +1,4 @@
 import sys
-import copy
 from typing import Iterable, List, Callable
 from dataclasses import dataclass
 
@@ -79,7 +78,8 @@ def part2(filename: str):
     for i_ptr, instruction in enumerate(instructions):
         if instruction.op_code == 'nop' or instruction.op_code == 'jmp':
             registers = Registers()
-            candidate_instructions = copy.deepcopy(instructions)
+            candidate_instructions = list(parse_instructions(
+                filename))  # copy.deepcopy(instructions) slow
             term_instruction = Instruction('term', 0)  # sentinel at end
             candidate_instructions.append(term_instruction)
 
